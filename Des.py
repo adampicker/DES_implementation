@@ -178,3 +178,12 @@ class Des:
             # print(K_b[i])
         return self.S_func(self.tables.Tables.S_BOX, K_b)
 
+
+    def feistel_func(self, right_half, key):
+        step1 = self.e_func(right_half, self.tables.Tables.E_bit_selection)
+        step2 = self.xor(key, step1)
+        step3 = self.extract_8_blocks(step2)
+        step4 = self.p_func(step3, self.tables.Tables.P)
+
+        return step4
+

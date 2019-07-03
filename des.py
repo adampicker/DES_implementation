@@ -49,6 +49,9 @@ while (processing):
             L_0 = IP[:32]
             R_0 = IP[32:]
 
+            left_half = L_0
+            right_half = R_0
+
             L_n = [None for i in range(17)]
             R_n = [None for i in range(17)]
 
@@ -56,15 +59,21 @@ while (processing):
             R_n[0] = R_0
 
             for i in range(1, 17):
-                L_n[i] = R_n[i - 1]
+                #L_n[i] = R_n[i - 1]
                 # R_n[i] = xor(L_n[i-1], p_func(extract_8_blocks(xor(e_func(R_n[i-1], des.E_bit_selection), des.tables.Tables.P))))
-                step1 = des.e_func(R_n[i - 1], des.tables.Tables.E_bit_selection)
+                '''step1 = des.e_func(right_half, des.tables.Tables.E_bit_selection)#step1 = des.e_func(R_n[i - 1], des.tables.Tables.E_bit_selection)
                 step2 = des.xor(des.K_n[i - 1], step1)
                 step3 = des.extract_8_blocks(step2)
-                step4 = des.p_func(step3, des.tables.Tables.P)
-                R_n[i] = des.xor(L_n[i - 1], step4)
+                step4 = des.p_func(step3, des.tables.Tables.P)'''
 
-            final = des.final_permutation(L_n[16], R_n[16], des.tables.Tables.final_IP)
+                step4 = des.feistel_func(right_half, des.K_n[i - 1]) #TO DO: HOW  to if keys are in the class
+
+                right = right_half
+                right_half = des.xor(left_half, step4)#R_n[i] = des.xor(L_n[i - 1], step4)
+                left_half = right
+
+
+            final = des.final_permutation(left_half, right_half, des.tables.Tables.final_IP)
             output_as_binary_string += final
 
         bytes = write_binary_file(output_as_binary_string)
