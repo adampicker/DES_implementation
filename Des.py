@@ -6,12 +6,15 @@ class Des:
 
 
     key = 'key as binary string'
+    source_as_binary_string = ''
+    destination_as_binary_string = ''
     K_n = []
     tables = Tables
 
-    def __init__(self, key_binary):
+    def __init__(self, key_binary, message_binary):
         self.key = key_binary
         self.K_n = [None for i in range(16)]
+        self.source_as_binary_string = message_binary
 
 
     def create_K_keys(self):
@@ -84,7 +87,7 @@ class Des:
 
         return key_as_binary_string
 
-    def add_padding(self,message_as_binary_string):
+    def add_padding(self, message_as_binary_string):
 
         blocks_to_add = (len(message_as_binary_string) / 64 - len(message_as_binary_string) // 64)
         missing_bytes = blocks_to_add * 64 // 8
@@ -96,7 +99,7 @@ class Des:
             print("Added padding successfully")
         else:
             print("Adding padding failed")
-        return message_as_binary_string
+        self.source_as_binary_string = message_as_binary_string
 
     def remove_padding(self,message_as_binary_string):
         found = False
@@ -106,7 +109,8 @@ class Des:
             if message_as_binary_string[i] == '1':
                 found = True
 
-        return message_as_binary_string[:i + 1]
+        print('removed padding')
+        self.destination_as_binary_string = message_as_binary_string[:i + 1]
 
     def e_func(self,R, E_bit_selection_table):
         expanded_R = ''
@@ -186,4 +190,36 @@ class Des:
         step4 = self.p_func(step3, self.tables.Tables.P)
 
         return step4
+
+    def run(self, encrypt):
+        self.create_K_keys()
+
+        if (encrypt) :self.add_padding(self.source_as_binary_string)
+        for i in range(len(self.source_as_binary_string) // 64):  # quantity of blocks
+            message_block = self.source_as_binary_string[i * 64: i * 64 + 64]
+
+            IP = ''
+            for i in range(len(self.tables.Tables.IP_1)):
+                IP += message_block[int(self.tables.Tables.IP_1[i]) - 1]
+
+            left_half = IP[:32]
+            right_half = IP[32:]
+
+            for i in range(16):
+
+                if (encrypt):
+                    step4 = self.feistel_func(right_half, self.K_n[i])  # TO DO: HOW  to if keys are in the class
+                else:
+                    step4 = self.feistel_func(right_half, self.K_n[-(i+1)])  # TO DO: HOW  to if keys are in the class
+
+                right = right_half
+                right_half = self.xor(left_half, step4)  # R_n[i] = des.xor(L_n[i - 1], step4)
+                left_half = right
+
+            final = self.final_permutation(left_half, right_half, self.tables.Tables.final_IP)
+            self.destination_as_binary_string += final
+        if (not encrypt):
+            self.remove_padding(self.destination_as_binary_string)
+
+
 
